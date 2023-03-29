@@ -792,6 +792,39 @@ contract RollerDAOV1 is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable,
         );
     }
 
+    function transferOwnership(address newOwner) external virtual onlyOwner {
+        require(newOwner != address(0), "ER02");
+        _owner = newOwner;
+    }
+
+    function updateMarketingFee(uint256 _mfee) external onlyOwner{
+        require(_mfee < 1000, "ER02");
+        _marketingFee = _mfee;
+    }
+
+    function excludeTax(address _exAddress) external onlyOwner{
+        _isExcluded[_exAddress] = true;
+    }
+
+    function unexcludeTax(address _exAddress) external onlyOwner{
+        _isExcluded[_exAddress] = false;
+    }
+
+    function updateLiquidityFee(uint256 _lfee) external onlyOwner{
+        require(_lfee < 1000, "ER03");
+        _liquidityFee = _lfee;
+    }
+
+    function updateLiquidityAddress(address _laddress) external onlyOwner{
+        require(_laddress != address(0), "ER04");
+        _liquidityPoolAddress = _laddress;
+    }
+
+    function updateMarketingAddress(address _maddress) external onlyOwner{
+        require(_maddress != address(0), "ER05");
+        _marketingAddress = _maddress;
+    }
+
     /**
      * @dev Moves `amount` of tokens from `sender` to `recipient`.
      *
@@ -819,7 +852,7 @@ contract RollerDAOV1 is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable,
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         
         
-        if(_isExcluded[from] || _isExcluded[to]){
+        if(_isExcluded[from] || _isExcluded[to] || (from != _liquidityPoolAddress && to != _liquidityPoolAddress)){
             unchecked {
                 _balances[from] = fromBalance - amount;
                 _balances[to] += amount;
@@ -838,7 +871,7 @@ contract RollerDAOV1 is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable,
             emit Transfer(from, to, amount.sub(_mfee).sub(_lfee));
             emit Transfer(from, _marketingAddress, _mfee);
             emit Transfer(from, _liquidityPoolAddress, _lfee);
-            _afterTokenTransfer(from, to, amount);
+            _afterTokenTransfer(from, to, amount); 
         }
     }
 
